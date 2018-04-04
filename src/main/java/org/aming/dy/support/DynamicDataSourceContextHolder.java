@@ -2,9 +2,6 @@ package org.aming.dy.support;
 
 import com.google.common.collect.Maps;
 
-import java.sql.Connection;
-import java.util.Map;
-
 /**
  * 动态数据源上下文信息
  *
@@ -13,9 +10,18 @@ import java.util.Map;
  **/
 public class DynamicDataSourceContextHolder {
 
-    private static final ThreadLocal<Map<String, Connection>> contextHolder = ThreadLocal.withInitial(Maps::newHashMap);
+    private static final ThreadLocal<DynamicDataSourceContext> contextHolder = ThreadLocal.withInitial(DynamicDataSourceContext::new);
 
-    public static void clearDataSourceType() {
+    public static void clearDataSources() {
         contextHolder.remove();
     }
+
+    public static void addDataSource(String dataSourceName) {
+		DynamicDataSourceContext context = contextHolder.get();
+		context.addDataSourceName(dataSourceName);
+	}
+
+	public static DynamicDataSourceContext getDataSourceContext() {
+    	return contextHolder.get();
+	}
 }

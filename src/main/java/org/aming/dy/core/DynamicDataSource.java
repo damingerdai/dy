@@ -1,5 +1,6 @@
 package org.aming.dy.core;
 
+import org.aming.dy.support.DynamicDataSourceContextHolder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.datasource.AbstractDataSource;
@@ -29,8 +30,13 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
      */
     private ConcurrentHashMap<String, DataSource> dsMap;
 
+//    protected String determineCurrentLookupKey() {
+//
+//	}
+
     @Override
     public Connection getConnection() throws SQLException {
+
         return null;
     }
 
