@@ -1,7 +1,5 @@
 package org.aming.dy.support;
 
-import com.google.common.collect.Maps;
-
 /**
  * 动态数据源上下文信息
  *
@@ -10,18 +8,20 @@ import com.google.common.collect.Maps;
  **/
 public class DynamicDataSourceContextHolder {
 
-    private static final ThreadLocal<DynamicDataSourceContext> contextHolder = ThreadLocal.withInitial(DynamicDataSourceContext::new);
+	private static final String DEFAULT_DATA_SOURCE = "main";
 
-    public static void clearDataSources() {
-        contextHolder.remove();
-    }
+	private static final ThreadLocal<String> contextHolder = ThreadLocal.withInitial(() -> DEFAULT_DATA_SOURCE);
 
-    public static void addDataSource(String dataSourceName) {
-		DynamicDataSourceContext context = contextHolder.get();
-		context.addDataSourceName(dataSourceName);
+	public static void clearDataSource() {
+		contextHolder.remove();
 	}
 
-	public static DynamicDataSourceContext getDataSourceContext() {
-    	return contextHolder.get();
+	public static void setDataSource(String dataSource) {
+		contextHolder.set(dataSource);
 	}
+
+	public static String getDataSource() {
+		return contextHolder.get();
+	}
+
 }

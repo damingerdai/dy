@@ -1,6 +1,7 @@
 package org.aming.dy.core;
 
 import org.aming.dy.support.DynamicDataSourceContextHolder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.datasource.AbstractDataSource;
@@ -28,53 +29,62 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
     /**
      * 其他数据源
      */
-    private ConcurrentHashMap<String, DataSource> dsMap;
+    private ConcurrentHashMap<String, DataSource> resolvedDataSources;
 
-//    protected String determineCurrentLookupKey() {
-//
-//	}
+    protected String determineCurrentLookupKey() {
+		return DynamicDataSourceContextHolder.getDataSource();
+	}
 
     @Override
     public Connection getConnection() throws SQLException {
-
-        return null;
+    	var dataSource = defaultDataSource;
+		String lookupKey = determineCurrentLookupKey();
+		if (StringUtils.isBlank(lookupKey)) {
+			dataSource = resolvedDataSources.get(lookupKey);
+		}
+        return dataSource.getConnection();
     }
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
-        return null;
+		var dataSource = defaultDataSource;
+		String lookupKey = determineCurrentLookupKey();
+		if (StringUtils.isBlank(lookupKey)) {
+			dataSource = resolvedDataSources.get(lookupKey);
+		}
+		return dataSource.getConnection(username, password);
     }
 
-    protected ConcurrentHashMap<String, DataSource> obtainDsMap() {
-        if (Objects.isNull(this.dsMap)) {
-            this.dsMap = new ConcurrentHashMap<>();
+    protected ConcurrentHashMap<String, DataSource> obtainResolvedDataSources() {
+        if (Objects.isNull(this.resolvedDataSources)) {
+            this.resolvedDataSources = new ConcurrentHashMap<>();
         }
-        return this.dsMap;
+        return this.resolvedDataSources;
     }
 
     public void setDefaultDataSource(DataSource defaultDataSource) {
         this.defaultDataSource = defaultDataSource;
     }
 
-    public void setDsMap(ConcurrentHashMap<String, DataSource> dsMap) {
-        this.dsMap = dsMap;
+    public void setResolvedDataSources(ConcurrentHashMap<String, DataSource> resolvedDataSources) {
+        this.resolvedDataSources = resolvedDataSources;
     }
 
     public void addDataSource(String name, DataSource dataSource) {
         Assert.notNull(name, "param 'name' is required");
         Assert.notNull(dataSource, "param 'dataSource' is required");
-        obtainDsMap().put(name, dataSource);
+		obtainResolvedDataSources().put(name, dataSource);
     }
 
     public void replaceDataSource(String name, DataSource dataSource) {
         Assert.notNull(name, "param 'name' is required");
         Assert.notNull(dataSource, "param 'dataSource' is required");
-        obtainDsMap().putIfAbsent(name, dataSource);
+		obtainResolvedDataSources().putIfAbsent(name, dataSource);
     }
 
     public void removeDataSource(String name) {
         Assert.notNull(name, "param 'name' is required");
-        obtainDsMap().remove(name);
+		obtainResolvedDataSources().remove(name);
     }
 
     public synchronized DataSource replaceDefaultDataSource(DataSource defaultDataSource) {
@@ -103,18 +113,18 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
         if (dataSource instanceof DynamicDataSource) {
             var defaultDynamicDataSource = (DynamicDataSource) dataSource;
             setDefaultDataSource(defaultDynamicDataSource.defaultDataSource);
-            initDsMap(defaultDynamicDataSource.obtainDsMap());
+            initDsMap(defaultDynamicDataSource.obtainResolvedDataSources());
         } else {
             setDefaultDataSource(dataSource);
         }
     }
 
-    private void initDsMap(Map<String, DataSource> dsMap) {
-        if (dsMap instanceof ConcurrentHashMap) {
-            setDsMap((ConcurrentHashMap<String, DataSource>)dsMap);
+    private void initDsMap(Map<String, DataSource> resolvedDataSources) {
+        if (resolvedDataSources instanceof ConcurrentHashMap) {
+			setResolvedDataSources((ConcurrentHashMap<String, DataSource>)resolvedDataSources);
         } else {
-            dsMap.forEach((k, v) -> {
-                obtainDsMap().put(k, v);
+			resolvedDataSources.forEach((k, v) -> {
+				obtainResolvedDataSources().put(k, v);
             });
         }
     }
@@ -126,8 +136,8 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
             throw new IllegalStateException("'defaultDataSource' is required");
         }
 
-        if (Objects.isNull(dsMap)) {
-            dsMap = new ConcurrentHashMap<>();
+        if (Objects.isNull(resolvedDataSources)) {
+			resolvedDataSources = new ConcurrentHashMap<>();
         }
     }
 
