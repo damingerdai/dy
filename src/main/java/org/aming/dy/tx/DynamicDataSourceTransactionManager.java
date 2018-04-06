@@ -1,15 +1,13 @@
 package org.aming.dy.tx;
 
-import org.aming.dy.core.DynamicDataSource;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.lang.Nullable;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionException;
-import org.springframework.transaction.support.AbstractPlatformTransactionManager;
-import org.springframework.transaction.support.DefaultTransactionStatus;
+import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
-import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * 动态数据源事务管理
@@ -17,43 +15,44 @@ import javax.sql.DataSource;
  * @author aming
  * @create 2018-04-03 8:51
  **/
-public class DynamicDataSourceTransactionManager extends AbstractPlatformTransactionManager implements PlatformTransactionManager, InitializingBean {
+public class DynamicDataSourceTransactionManager {
 
-    @Nullable
-    private DynamicDataSource dynamicDataSource;
+	private static Logger logger = LoggerFactory.getLogger(DynamicDataSourceTransactionManager.class);
 
-    public void setDynamicDataSource(@Nullable DataSource dataSource) {
-        if (dataSource instanceof DynamicDataSource) {
-            this.dynamicDataSource = (DynamicDataSource)dataSource;
-        } else {
+	private static ThreadLocal<Map<String, Connection>> transactionHolder = ThreadLocal.withInitial(Maps::newHashMap);
 
-        }
-    }
+	public static Connection getConnection(String name) throws SQLException {
+		Assert.notNull(name, "param 'name' is required");
+		return transactionHolder.get().getOrDefault(name, null);
+	}
 
-    @Override
-    protected Object doGetTransaction() throws TransactionException {
-        return null;
-    }
+	public static void addConnection(String name, Connection connection) throws SQLException {
+		Assert.notNull(name, "param 'name' is required");
+		Assert.notNull(connection,  "param 'connection' is required");
+		transactionHolder.get().put(name, connection);
+	}
 
-    @Override
-    protected void doBegin(Object o, TransactionDefinition transactionDefinition) throws TransactionException {
+	public static void removeConnections() throws SQLException {
+		transactionHolder.remove();
+	}
 
-    }
+	public static void commitConnections() throws SQLException {
+		transactionHolder.get().forEach((k, v) -> {
+			try {
+				v.commit();
+			} catch (SQLException e) {
+				logger.debug("fail to commit connection : " + e.getMessage());
+			}
+		});
+	}
 
-    @Override
-    protected void doCommit(DefaultTransactionStatus defaultTransactionStatus) throws TransactionException {
-
-    }
-
-    @Override
-    protected void doRollback(DefaultTransactionStatus defaultTransactionStatus) throws TransactionException {
-
-    }
-
-
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-
-    }
+	public static void rollbackConnections() throws SQLException {
+		transactionHolder.get().forEach((k,v) -> {
+			try {
+				v.rollback();
+			} catch (SQLException e) {
+				logger.debug("fail to rollback connection : " + e.getMessage());
+			}
+		});
+	}
 }

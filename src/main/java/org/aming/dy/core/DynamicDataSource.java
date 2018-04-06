@@ -1,6 +1,7 @@
 package org.aming.dy.core;
 
 import org.aming.dy.support.DynamicDataSourceContextHolder;
+import org.aming.dy.tx.DynamicDataSourceTransactionManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.beans.factory.InitializingBean;
@@ -37,13 +38,34 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 
     @Override
     public Connection getConnection() throws SQLException {
-    	var dataSource = defaultDataSource;
-		String lookupKey = determineCurrentLookupKey();
-		if (StringUtils.isBlank(lookupKey)) {
-			dataSource = resolvedDataSources.get(lookupKey);
+		var lookupKey = determineCurrentLookupKey();
+		var connection = DynamicDataSourceTransactionManager.getConnection(lookupKey);
+		if (Objects.isNull(connection)) {
+			var dataSource = getDataSource(lookupKey);
+			connection = doGetConnection(dataSource);
+			DynamicDataSourceTransactionManager.addConnection(lookupKey, connection);
 		}
-        return dataSource.getConnection();
+    	return connection;
     }
+
+    private DataSource getDataSource(String lookupKey) throws SQLException {
+    	var dataSource = defaultDataSource;
+
+    	if (StringUtils.isNotBlank(lookupKey)) {
+    		dataSource = resolvedDataSources.get(lookupKey);
+		}
+		if (Objects.isNull(dataSource)) {
+    		return defaultDataSource;
+		} else {
+    		return dataSource;
+		}
+	}
+
+    protected  Connection doGetConnection(DataSource dataSource) throws SQLException {
+    	var connection = dataSource.getConnection();
+    	connection.setAutoCommit(false);
+    	return connection;
+	}
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
