@@ -2,6 +2,7 @@ group 'org.aming'
 version '1.0.0'
 
 apply plugin: 'java'
+apply plugin: 'maven'
 
 sourceCompatibility = 10
 targetCompatibility = 10
@@ -15,6 +16,11 @@ repositories {
     mavenCentral()
 }
 
+artifacts {
+    archives file('./build/libs/dy-1.0.0.jar')
+}
+
+
 dependencies {
     compile group: 'org.springframework', name: 'spring-aop', version: springVersion
     compile group: 'org.springframework', name: 'spring-jdbc', version: springVersion
@@ -24,4 +30,49 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
     compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+
+            //指定项目部署到的中央库地址，UserName和Password就是Part 1中注册的账号。
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: 'damingerdai', password: 'Daming,.,1994')
+            }
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: 'damingerdai', password: 'Daming,.,1994')
+            }
+
+            //构造项目的Pom文件，参见Part 2中Pom文件的规范，不要遗漏必填项
+            pom.project {
+                name project.name
+                packaging 'jar'
+                description '动态数据源'
+                url 'https://github.com/damingerdai/dy'
+
+                scm {
+                    url 'scm:git@github.com:damingerdai/dy.git'
+                    connection 'scm:git@github.com:damingerdai/dy.git'
+                    developerConnection 'git@github.com:damingerdai/dy.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'wangjie'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'arthur ming'
+                        name 'mingguobin'
+                        email 'mingguobin@live.com'
+                    }
+                }
+            }
+        }
+    }
 }

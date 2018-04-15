@@ -18,7 +18,6 @@ import java.lang.annotation.Target;
 public @interface TargetDataSource {
 
     /**
-     * 数据库名字,默认为main
      * @return
      */
     String name() default "main";

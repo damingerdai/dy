@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.Map;
 
 /**
- * 动态数据源事务管理
  *
  * @author aming
  * @create 2018-04-03 8:51

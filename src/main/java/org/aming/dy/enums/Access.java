@@ -1,7 +1,6 @@
 package org.aming.dy.enums;
 
 /**
- * 数据库权限
  *
  * @author aming
  * @create 2018-04-03 8:17

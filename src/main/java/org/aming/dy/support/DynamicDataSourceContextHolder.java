@@ -1,7 +1,6 @@
 package org.aming.dy.support;
 
 /**
- * 动态数据源上下文信息
  *
  * @author aming
  * @create 2018-04-04 13:29
