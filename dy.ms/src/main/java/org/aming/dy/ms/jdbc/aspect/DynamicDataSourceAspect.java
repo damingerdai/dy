@@ -28,7 +28,7 @@ public class DynamicDataSourceAspect {
         boolean isParse = ds.isParse();
         if (isParse) {
             String dataSource = ds.dataSource();
-            if (StringUtils.isRegMatch(dataSource, "^#{\\w}$")) {
+            if (StringUtils.isRegMatch(dataSource, "^#\\{\\w{1,}\\}$")) {
                 changeDataSourceWithExpressionLookupKey(joinpoint, dataSource);
             } else if(StringUtils.isRegMatch(dataSource, "^#\\d$")) {
                 changeDataSourceWithIndexExpressionLookupKey(dataSource, joinpoint.getArgs());
@@ -48,8 +48,9 @@ public class DynamicDataSourceAspect {
             for (int i = 0; i < parameterNames.length; i++) {
                 if (parameterNames[i].equals(dataSourceParam)) {
                     Object[] args = joinpoint.getArgs();
-                    if (Objects.nonNull(args) && args.length > 0 && args.length < i +1) {
+                    if (Objects.nonNull(args) && args.length > 0 ) {
                         Object dataSourceArg = args[i];
+                        System.out.println(dataSourceArg);
 						DynamicDataSourceLookupKeyHolder.setDataSource(String.valueOf(dataSourceArg));
                         return;
                     } else {

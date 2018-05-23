@@ -1,5 +1,7 @@
 package org.aming.dy.ms.jdbc.support;
 
+import org.springframework.stereotype.Component;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -11,6 +13,7 @@ import java.util.stream.Collectors;
  * @athur aming
  * @date 2018-05-23 11:39
  */
+@Component
 public class MysqlJdbcUrlBuilder implements DataSourceJbdcUrlBuilder {
 
 	private final String JDBC_Url_TEMPLATE = "jdbc:mysql://%s:%d/%s";

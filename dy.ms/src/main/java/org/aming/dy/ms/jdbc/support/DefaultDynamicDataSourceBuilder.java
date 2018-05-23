@@ -2,6 +2,7 @@ package org.aming.dy.ms.jdbc.support;
 
 import com.zaxxer.hikari.HikariDataSource;
 import org.aming.dy.ms.jdbc.config.HikariProp;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DefaultDynamicDataSourceBuilder extends AbstractDynamicDataSourceBuilder {
 
 	private HikariProp hikariProp;
+	private DataSourceJbdcUrlBuilder dataSourceJbdcUrlBuilder;
 
 	@Override
 	public DataSource buildMasterDataSource() {
@@ -41,13 +43,13 @@ public class DefaultDynamicDataSourceBuilder extends AbstractDynamicDataSourceBu
 	@Override
 	public ConcurrentHashMap<String, DataSource> buildSlaveDataSource(DataSource masterDataSource) {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(masterDataSource);
-		return jdbcTemplate.query("select * from dy_datasource", this::mapRow).stream().collect(ConcurrentHashMap::new, (result, value) -> result.put(value.getPoolName(), value), ConcurrentHashMap::putAll);
+		return jdbcTemplate.query("select name, driver, host, port, datasource_name, username, password from dy_datasource", this::mapRow).stream().collect(ConcurrentHashMap::new, (result, value) -> result.put(value.getPoolName(), value), ConcurrentHashMap::putAll);
 	}
 
 	private HikariDataSource mapRow(ResultSet rs, int rowNum) throws SQLException {
 		HikariDataSource dataSource = new HikariDataSource();
 		dataSource.setDriverClassName(rs.getString("driver"));
-		dataSource.setJdbcUrl(rs.getString("url"));
+		dataSource.setJdbcUrl(dataSourceJbdcUrlBuilder.buildJdbcUrl(rs.getString("host"), rs.getInt("port"), rs.getString("datasource_name")));
 		dataSource.setUsername(rs.getString("username"));
 		dataSource.setPassword(rs.getString("password"));
 		dataSource.setPoolName(rs.getString("name"));
@@ -58,4 +60,12 @@ public class DefaultDynamicDataSourceBuilder extends AbstractDynamicDataSourceBu
 	public DefaultDynamicDataSourceBuilder(HikariProp hikariProp) {
 		this.hikariProp = hikariProp;
 	}
+
+
+	@Autowired
+	public DefaultDynamicDataSourceBuilder setDataSourceJbdcUrlBuilder(DataSourceJbdcUrlBuilder dataSourceJbdcUrlBuilder) {
+		this.dataSourceJbdcUrlBuilder = dataSourceJbdcUrlBuilder;
+		return this;
+	}
+
 }

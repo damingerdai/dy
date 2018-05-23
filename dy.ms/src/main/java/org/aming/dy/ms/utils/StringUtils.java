@@ -20,4 +20,8 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		Matcher matcher = pattern.matcher(str);
 		return matcher.matches();
 	}
+
+	public static void main(String[] args) {
+		System.out.print(isRegMatch("#{2}", "^#\\{\\w{1,}\\}$"));
+	}
 }

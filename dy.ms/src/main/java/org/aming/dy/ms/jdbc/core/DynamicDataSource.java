@@ -32,7 +32,7 @@ public class DynamicDataSource  extends AbstractDataSource implements Initializi
     @Override
     public Connection getConnection() throws SQLException {
         String lookupKey = determineCurrentLookupKey();
-        return !StringUtils.isEmpty(lookupKey) && slaveDataSources.contains(lookupKey) ? slaveDataSources.get(lookupKey).getConnection() : masterDataSource.getConnection();
+        return !StringUtils.isEmpty(lookupKey) && slaveDataSources.containsKey(lookupKey) ? slaveDataSources.get(lookupKey).getConnection() : masterDataSource.getConnection();
     }
 
     @Override

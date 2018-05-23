@@ -28,6 +28,7 @@ public class DyConfig {
 		hikariDataSource.setJdbcUrl(hikariProp.getJdbcUrl());
 		hikariDataSource.setUsername(hikariProp.getUsername());
 		hikariDataSource.setPassword(hikariProp.getPassword());
+		hikariDataSource.setPoolName("master");
 		return hikariDataSource;
 	}
 
