@@ -1,15 +1,17 @@
 package org.aming.dy.ms.jdbc.core;
 
+import org.aming.dy.ms.jdbc.support.DynamicCacheManager;
 import org.aming.dy.ms.jdbc.support.DynamicDataSourceLookupKeyHolder;
+import org.aming.dy.ms.utils.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,25 +27,38 @@ public class DynamicDataSource  extends AbstractDataSource implements Initializi
 
     private ConcurrentHashMap<String, DataSource> slaveDataSources;
 
-    protected String determineCurrentLookupKey() {
+    private String determineCurrentLookupKey() {
         return DynamicDataSourceLookupKeyHolder.getDataSource();
     }
 
     @Override
     public Connection getConnection() throws SQLException {
         String lookupKey = determineCurrentLookupKey();
-        return !StringUtils.isEmpty(lookupKey) && slaveDataSources.containsKey(lookupKey) ? slaveDataSources.get(lookupKey).getConnection() : masterDataSource.getConnection();
+		return DynamicCacheManager.getConnection(lookupKey).orElse(doGetConnection(lookupKey));
     }
+
+    private Connection doGetConnection(String lookupKey) throws SQLException {
+		if (!StringUtils.isEmpty(lookupKey) && slaveDataSources.containsKey(lookupKey)) {
+			return slaveDataSources.get(lookupKey).getConnection();
+		} else {
+			return masterDataSource.getConnection();
+		}
+	}
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
         String lookupKey = determineCurrentLookupKey();
-        if (!StringUtils.isEmpty(lookupKey) && slaveDataSources.contains(lookupKey)) {
-            return slaveDataSources.get(lookupKey).getConnection(username, password);
-        } else {
-            return masterDataSource.getConnection(username, password);
-        }
+		return DynamicCacheManager.getConnection(lookupKey).orElse(doGetConnection(lookupKey, username, password));
     }
+
+    private Connection doGetConnection(String lookupKey, String username, String password) throws SQLException {
+    	if (slaveDataSources.containsKey(lookupKey)) {
+    		return slaveDataSources.get(lookupKey).getConnection(username, password);
+		} else {
+    		return masterDataSource.getConnection(username, password);
+		}
+	}
+
 
 	public DataSource getMasterDataSource() {
 		return masterDataSource;
@@ -81,9 +96,9 @@ public class DynamicDataSource  extends AbstractDataSource implements Initializi
 	@Override
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(masterDataSource, "'masterDataSource' is required");
-
         if (Objects.isNull(slaveDataSources)) {
             slaveDataSources = new ConcurrentHashMap<>();
         }
+
     }
 }

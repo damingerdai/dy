@@ -1,6 +1,5 @@
 package org.aming.dy.support;
 
-import org.aming.dy.annotation.DynamicTransactional;
 import org.aming.dy.tx.DynamicDataSourceTransactionManager;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;

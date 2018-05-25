@@ -16,10 +16,9 @@ import java.util.stream.Collectors;
 @Component
 public class MysqlJdbcUrlBuilder implements DataSourceJbdcUrlBuilder {
 
-	private final String JDBC_Url_TEMPLATE = "jdbc:mysql://%s:%d/%s";
-
 	@Override
 	public String buildJdbcUrl(String host, int port, String datasourceName, Map<String, String> map) {
+		String JDBC_Url_TEMPLATE = "jdbc:mysql://%s:%d/%s";
 		String jdbcUrl = String.format(JDBC_Url_TEMPLATE, host, port, datasourceName);
 		if (Objects.nonNull(map) && map.size() > 0) {
 			jdbcUrl += map.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining("&", "?", ""));

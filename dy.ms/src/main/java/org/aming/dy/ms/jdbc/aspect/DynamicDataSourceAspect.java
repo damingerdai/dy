@@ -1,6 +1,7 @@
 package org.aming.dy.ms.jdbc.aspect;
 
 import org.aming.dy.ms.jdbc.annotation.TargetDataSource;
+import org.aming.dy.ms.jdbc.support.DynamicCacheManager;
 import org.aming.dy.ms.jdbc.support.DynamicDataSourceLookupKeyHolder;
 import org.aming.dy.ms.utils.StringUtils;
 import org.aspectj.lang.JoinPoint;
@@ -9,6 +10,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
@@ -80,4 +82,9 @@ public class DynamicDataSourceAspect {
     public void restoreDataSource(JoinPoint point, TargetDataSource ds) {
 		DynamicDataSourceLookupKeyHolder.clearDataSource();
     }
+
+    @After("@annotation(service)")
+    public void removeCacheConnection() {
+		DynamicCacheManager.remove();
+	}
 }

@@ -8,7 +8,7 @@ sourceCompatibility = 10
 targetCompatibility = 10
 
 ext {
-    springVersion = '5.0.4.RELEASE'
+    springVersion = '5.0.6.RELEASE'
 }
 
 repositories {
@@ -25,6 +25,7 @@ dependencies {
     compile group: 'org.springframework', name: 'spring-aop', version: springVersion
     compile group: 'org.springframework', name: 'spring-jdbc', version: springVersion
     compile group: 'org.springframework', name: 'spring-tx', version: springVersion
+    compile group: 'org.springframework', name: 'spring-context', version: springVersion
     compile group: 'org.aspectj', name: 'aspectjrt', version: '1.9.0'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'

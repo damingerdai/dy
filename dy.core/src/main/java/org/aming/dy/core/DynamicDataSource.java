@@ -1,7 +1,6 @@
 package org.aming.dy.core;
 
 import org.aming.dy.support.DynamicDataSourceContextHolder;
-import org.aming.dy.tx.DynamicDataSourceTransactionManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.beans.factory.InitializingBean;
@@ -25,7 +24,7 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 
 	private ReadWriteLock lock = new ReentrantReadWriteLock();
 
-	private DataSource defaultDataSource;
+	private DataSource masterDataSource;
 
 	private ConcurrentHashMap<String, DataSource> resolvedDataSources;
 
@@ -36,23 +35,20 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 	@Override
 	public Connection getConnection() throws SQLException {
 		var lookupKey = determineCurrentLookupKey();
-		var connection = DynamicDataSourceTransactionManager.getConnection(lookupKey);
-		if (Objects.isNull(connection)) {
-			var dataSource = getDataSource(lookupKey);
-			connection = doGetConnection(dataSource);
-			DynamicDataSourceTransactionManager.addConnection(lookupKey, connection);
+		var dataSource = getDataSource(lookupKey);
+		try (var connection = doGetConnection(dataSource)) {
+			return connection;
 		}
-		return connection;
 	}
 
-	private DataSource getDataSource(String lookupKey) throws SQLException {
-		var dataSource = defaultDataSource;
+	private DataSource getDataSource(String lookupKey) {
+		var dataSource = masterDataSource;
 
 		if (StringUtils.isNotBlank(lookupKey)) {
 			dataSource = resolvedDataSources.get(lookupKey);
 		}
 		if (Objects.isNull(dataSource)) {
-			return defaultDataSource;
+			return masterDataSource;
 		} else {
 			return dataSource;
 		}
@@ -66,7 +62,7 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 
 	@Override
 	public Connection getConnection(String username, String password) throws SQLException {
-		var dataSource = defaultDataSource;
+		var dataSource = masterDataSource;
 		String lookupKey = determineCurrentLookupKey();
 		if (StringUtils.isBlank(lookupKey)) {
 			dataSource = resolvedDataSources.get(lookupKey);
@@ -82,7 +78,7 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 	}
 
 	public void setDefaultDataSource(DataSource defaultDataSource) {
-		this.defaultDataSource = defaultDataSource;
+		this.masterDataSource = defaultDataSource;
 	}
 
 	public void setResolvedDataSources(ConcurrentHashMap<String, DataSource> resolvedDataSources) {
@@ -116,12 +112,12 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 		obtainResolvedDataSources().remove(name);
 	}
 
-	public  DataSource replaceDefaultDataSource(DataSource defaultDataSource) {
+	public DataSource replaceDefaultDataSource(DataSource defaultDataSource) {
 		Assert.notNull(defaultDataSource, "param 'defaultDataSource' is required");
 		lock.writeLock().lock();
 		try {
-			var oldDataSource = this.defaultDataSource;
-			this.defaultDataSource = defaultDataSource;
+			var oldDataSource = this.masterDataSource;
+			this.masterDataSource = defaultDataSource;
 			return oldDataSource;
 		} finally {
 			lock.writeLock().unlock();
@@ -130,7 +126,7 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 
 	public DynamicDataSource(DataSource defaultDataSource, Map<String, DataSource> dsMap) {
 		super();
-		this.defaultDataSource = defaultDataSource;
+		this.masterDataSource = defaultDataSource;
 		this.initDsMap(dsMap);
 	}
 
@@ -146,7 +142,7 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 	private void initDynamicDataSource(DataSource dataSource) {
 		if (dataSource instanceof DynamicDataSource) {
 			var defaultDynamicDataSource = (DynamicDataSource) dataSource;
-			setDefaultDataSource(defaultDynamicDataSource.defaultDataSource);
+			setDefaultDataSource(defaultDynamicDataSource.masterDataSource);
 			initDsMap(defaultDynamicDataSource.obtainResolvedDataSources());
 		} else {
 			setDefaultDataSource(dataSource);
@@ -166,7 +162,7 @@ public class DynamicDataSource extends AbstractDataSource implements Initializin
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (Objects.isNull(defaultDataSource)) {
+		if (Objects.isNull(masterDataSource)) {
 			throw new IllegalStateException("'defaultDataSource' is required");
 		}
 
