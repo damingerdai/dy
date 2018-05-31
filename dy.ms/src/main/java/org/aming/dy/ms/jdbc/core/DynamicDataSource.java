@@ -34,7 +34,14 @@ public class DynamicDataSource  extends AbstractDataSource implements Initializi
     @Override
     public Connection getConnection() throws SQLException {
         String lookupKey = determineCurrentLookupKey();
-		return DynamicCacheManager.getConnection(lookupKey).orElse(doGetConnection(lookupKey));
+		Optional<Connection> optional = DynamicCacheManager.getConnection(lookupKey);
+		if (optional.isPresent()) {
+			return optional.get();
+		} else {
+			Connection connection = doGetConnection(lookupKey);
+			DynamicCacheManager.cache(lookupKey, connection);
+			return connection;
+		}
     }
 
     private Connection doGetConnection(String lookupKey) throws SQLException {
@@ -48,7 +55,14 @@ public class DynamicDataSource  extends AbstractDataSource implements Initializi
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
         String lookupKey = determineCurrentLookupKey();
-		return DynamicCacheManager.getConnection(lookupKey).orElse(doGetConnection(lookupKey, username, password));
+		Optional<Connection> optional = DynamicCacheManager.getConnection(lookupKey);
+		if (optional.isPresent()) {
+			return optional.get();
+		} else {
+			Connection connection = doGetConnection(lookupKey, username, password);
+			DynamicCacheManager.cache(lookupKey, connection);
+			return connection;
+		}
     }
 
     private Connection doGetConnection(String lookupKey, String username, String password) throws SQLException {
@@ -58,7 +72,6 @@ public class DynamicDataSource  extends AbstractDataSource implements Initializi
     		return masterDataSource.getConnection(username, password);
 		}
 	}
-
 
 	public DataSource getMasterDataSource() {
 		return masterDataSource;
