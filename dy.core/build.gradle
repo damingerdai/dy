@@ -4,8 +4,8 @@ version '1.0.0'
 apply plugin: 'java'
 apply plugin: 'maven'
 
-sourceCompatibility = 10
-targetCompatibility = 10
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 ext {
     springVersion = '5.0.6.RELEASE'
@@ -22,15 +22,14 @@ artifacts {
 
 
 dependencies {
-    compile group: 'org.springframework', name: 'spring-aop', version: springVersion
-    compile group: 'org.springframework', name: 'spring-jdbc', version: springVersion
-    compile group: 'org.springframework', name: 'spring-tx', version: springVersion
-    compile group: 'org.springframework', name: 'spring-context', version: springVersion
-    compile group: 'org.aspectj', name: 'aspectjrt', version: '1.9.0'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
-    compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
+    compile group: 'com.google.guava', name: 'guava', version: '25.0-jre'
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'com.zaxxer', name: 'HikariCP', version: '3.2.0'
+    testCompile group: 'mysql', name: 'mysql-connector-java', version: '8.0.11'
+    
+
 }
 
 uploadArchives {
