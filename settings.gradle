@@ -1,1 +1,3 @@
-include 'dy.core'
+rootProject.name = 'dy'
+include 'dy.core','dy.hikaricp'
+

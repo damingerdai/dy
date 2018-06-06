@@ -1,5 +1,4 @@
 group 'org.aming'
-version
 
 apply plugin: 'java'
 
