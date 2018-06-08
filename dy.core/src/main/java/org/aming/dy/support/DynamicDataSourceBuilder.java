@@ -2,6 +2,8 @@ package org.aming.dy.support;
 
 import org.aming.dy.core.DynamicDataSource;
 import org.aming.dy.exceptions.DynamicDataSourceException;
+import org.aming.dy.logger.DynamicLogger;
+import org.aming.dy.logger.LoggerManager;
 
 /**
  * Description: 动态数据源创建器
@@ -10,6 +12,10 @@ import org.aming.dy.exceptions.DynamicDataSourceException;
  * Time: 23:16
  */
 public abstract class DynamicDataSourceBuilder {
+
+	protected final DynamicLogger logger = LoggerManager.getDynamicLogger(getClass());
+
+	protected DynamicDataSource dynamicDataSource;
 
 	public abstract DynamicDataSource build() throws DynamicDataSourceException;
 }
